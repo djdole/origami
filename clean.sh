@@ -1,4 +1,4 @@
 #!/bin/bash
-rm *.box
-rm -rf packer_cache
+rm vm/*.box
+rm -rf vm/packer_cache
 rm -rf .vagrant
