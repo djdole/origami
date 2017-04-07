@@ -73,7 +73,7 @@ function Get-InstalledApps
 #$msiFile = $tempdir+"\vagrant_1.9.3.msi"
 $appToMatch = '*Puppet Agent*'
 $msiFile = $tempdir+"\puppet-agent-x64-latest.msi"
-$msiUrl = https://downloads.puppetlabs.com/windows/puppet-agent-x64-latest.msi
+$msiUrl = "https://downloads.puppetlabs.com/windows/puppet-agent-x64-latest.msi"
 
 wget -UseBasicParsing $msiUrl -OutFile $msiFile
 $result = Get-InstalledApps | where {$_.DisplayName -like $appToMatch}
