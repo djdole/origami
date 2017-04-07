@@ -5,8 +5,8 @@ If (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
   Break
 }
 
-$tempdir = Get-Location
-$tempdir = $tempdir.tostring()
+#$tempdir = Get-Location.tostring()
+$tempdir = $env:TEMP
 $msiArgs = "-qb"
 
 function Install-MSI
@@ -40,7 +40,7 @@ function Install-MSI
   }
   Write-Host "Installing $msi ..."
   $process = Start-Process -FilePath msiexec.exe -ArgumentList $arguments -Wait -PassThru
-  if ($Number -eq 0)
+  if ($process.ExitCode -eq 0)
   {
     Write-Host "Install successful."
   }
