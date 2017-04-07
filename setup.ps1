@@ -7,10 +7,6 @@ If (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
 
 $tempdir = Get-Location
 $tempdir = $tempdir.tostring()
-#$appToMatch = 'Vagrant'
-#$msiFile = $tempdir+"\vagrant_1.9.3.msi"
-$appToMatch = '*Puppet Agent*'
-$msiFile = $tempdir+"\puppet-agent-x64-latest.msi"
 $msiArgs = "-qb"
 
 function Install-MSI
@@ -72,10 +68,16 @@ function Get-InstalledApps
     Get-ItemProperty $regpath | .{process{if($_.DisplayName -and $_.UninstallString) { $_ } }} | Select DisplayName, Publisher, InstallDate, DisplayVersion, UninstallString |Sort DisplayName
 }
 
-wget https://downloads.puppetlabs.com/windows/puppet-agent-x64-latest.msi
+
+#$appToMatch = 'Vagrant'
+#$msiFile = $tempdir+"\vagrant_1.9.3.msi"
+$appToMatch = '*Puppet Agent*'
+$msiFile = $tempdir+"\puppet-agent-x64-latest.msi"
+$msiUrl = https://downloads.puppetlabs.com/windows/puppet-agent-x64-latest.msi
+
+wget -UseBasicParsing $msiUrl -OutFile $msiFile
 $result = Get-InstalledApps | where {$_.DisplayName -like $appToMatch}
 If ($result -eq $null)
 {
   "$msiFile" | Install-MSI
 }
-
