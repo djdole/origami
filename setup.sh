@@ -8,3 +8,7 @@ fi
 set -e
 
 apt-get install puppet-agent
+./scripts/edestecd-software.puppet
+puppet apply scripts/chrome.pp
+puppet apply scripts/virtualbox.pp
+puppet apply scripts/vagrant.pp
