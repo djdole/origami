@@ -10,3 +10,8 @@ $tempdir = $env:TEMP
 . "scripts\functions.ps1"
 
 GetAndInstall-MSI -name "*Puppet Agent*" -path "$tempdir\puppet-agent-x64-latest.msi" -url "https://downloads.puppetlabs.com/windows/puppet-agent-x64-latest.msi"
+
+puppet module install edestecd-software --version 1.1.0
+puppet apply scripts/chrome.pp
+puppet apply scripts/virtualbox.pp
+puppet apply scripts/vagrant.pp
