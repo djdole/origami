@@ -1,5 +1,5 @@
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-function Unzip
+function unzip
 {
     param([string]$zipfile, [string]$outpath)
 
