@@ -6,6 +6,21 @@ function unzip
     [System.IO.Compression.ZipFile]::ExtractToDirectory($zipfile, $outpath)
 }
 
+function RmIfExists
+{
+  [CmdletBinding()]
+    Param(
+      [parameter(mandatory=$true)]
+      [ValidateNotNullorEmpty()]
+      [string]$path
+    )
+	if([System.IO.File]::Exists($path))
+	{
+	  #rm "$path"
+	  Remove-Item -Path "$path" -Force
+	}
+}
+
 function Install-MSI
 {
   [CmdletBinding()]
@@ -95,10 +110,10 @@ function GetAndInstall-MSI
       [ValidateNotNullorEmpty()]
       [string]$url
     )
-  Download -url "$url" -saveto "$path"
   $result = Get-InstalledApps | where {$_.DisplayName -like $name}
   if ($result -eq $null)
   {
+    Download -url "$url" -saveto "$path"
     "$path" | Install-MSI
   }
 }
