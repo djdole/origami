@@ -1,6 +1,7 @@
 .gitignore
 .vagrant
 .vagrant/
+vm/packer.*
 vm/packer_cache
 vm/packer_cache/
 *.swp

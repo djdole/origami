@@ -1,3 +1,26 @@
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+function unzip
+{
+    param([string]$zipfile, [string]$outpath)
+
+    [System.IO.Compression.ZipFile]::ExtractToDirectory($zipfile, $outpath)
+}
+
+function RmIfExists
+{
+  [CmdletBinding()]
+    Param(
+      [parameter(mandatory=$true)]
+      [ValidateNotNullorEmpty()]
+      [string]$path
+    )
+	if([System.IO.File]::Exists($path))
+	{
+	  #rm "$path"
+	  Remove-Item -Path "$path" -Force
+	}
+}
+
 function Install-MSI
 {
   [CmdletBinding()]
@@ -57,6 +80,22 @@ function Get-InstalledApps
     Get-ItemProperty $regpath | .{process{if($_.DisplayName -and $_.UninstallString) { $_ } }} | Select DisplayName, Publisher, InstallDate, DisplayVersion, UninstallString |Sort DisplayName
 }
 
+function Download
+{
+  [CmdletBinding()]
+    Param(
+      [parameter(mandatory=$true)]
+      [ValidateNotNullorEmpty()]
+      [string]$url,
+      [parameter(mandatory=$true)]
+      [ValidateNotNullorEmpty()]
+      [string]$saveto
+    )
+  $AllProtocols = [System.Net.SecurityProtocolType]'Ssl3,Tls,Tls11,Tls12'
+  [System.Net.ServicePointManager]::SecurityProtocol = $AllProtocols
+  wget -UseBasicParsing "$url" -OutFile "$saveto"
+}
+
 function GetAndInstall-MSI
 {
   [CmdletBinding()]
@@ -71,10 +110,10 @@ function GetAndInstall-MSI
       [ValidateNotNullorEmpty()]
       [string]$url
     )
-  wget -UseBasicParsing $url -OutFile $path
   $result = Get-InstalledApps | where {$_.DisplayName -like $name}
   if ($result -eq $null)
   {
+    Download -url "$url" -saveto "$path"
     "$path" | Install-MSI
   }
 }
