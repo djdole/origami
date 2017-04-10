@@ -65,6 +65,22 @@ function Get-InstalledApps
     Get-ItemProperty $regpath | .{process{if($_.DisplayName -and $_.UninstallString) { $_ } }} | Select DisplayName, Publisher, InstallDate, DisplayVersion, UninstallString |Sort DisplayName
 }
 
+function Download
+{
+  [CmdletBinding()]
+    Param(
+      [parameter(mandatory=$true)]
+      [ValidateNotNullorEmpty()]
+      [string]$url,
+      [parameter(mandatory=$true)]
+      [ValidateNotNullorEmpty()]
+      [string]$saveto
+    )
+  $AllProtocols = [System.Net.SecurityProtocolType]'Ssl3,Tls,Tls11,Tls12'
+  [System.Net.ServicePointManager]::SecurityProtocol = $AllProtocols
+  wget -UseBasicParsing "$url" -OutFile "$saveto"
+}
+
 function GetAndInstall-MSI
 {
   [CmdletBinding()]
@@ -79,7 +95,7 @@ function GetAndInstall-MSI
       [ValidateNotNullorEmpty()]
       [string]$url
     )
-  wget -UseBasicParsing $url -OutFile $path
+  Download -url "$url" -saveto "$path"
   $result = Get-InstalledApps | where {$_.DisplayName -like $name}
   if ($result -eq $null)
   {
