@@ -7,57 +7,91 @@ If (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
 
 $curdir = split-path -parent $MyInvocation.MyCommand.Definition
 $tempdir = $env:TEMP
-. "scripts\functions.ps1"
+. "$curdir\scripts\functions.ps1"
 
+$UseSharedBox = $true
 $Name = "BLANK"
 $FileName = $Name + ".box"
-$RemoteBoxLoc = "\\morgan\DocuSign\Development\Connect"
-$RemoteFileName = $RemoteBoxLoc + "\" + $FileName
+$BoxStore = $curdir + "\STORE"
+$BoxStoreFile = $BoxStore + "\" + $FileName
 
 $VMDir = $curdir + "\vm"
 $BoxFile = $VMDir + "\" + $FileName
 $BoxJson = $VMDir + "\" + $Name + ".json"
-
-# Install puppet
-GetAndInstall-MSI -name "*Puppet Agent*" -path "$tempdir\puppet-agent-x64-latest.msi" -url "https://downloads.puppetlabs.com/windows/puppet-agent-x64-latest.msi"
-
-#Install virtualbox, & vagrant
-puppet module install edestecd-software --version 1.1.0
-#puppet apply "scripts\chrome.pp"
-puppet apply "scripts\virtualbox.pp"
-puppet apply "scripts\vagrant.pp"
-
+#Install Prereqs (if necessary)...
+. "$curdir\scripts\setupPrereqs.ps1"
+  
 # Check if an existing BOX file exists, if not create it.
-if(-Not (Test-Path "$RemoteFileName"))
+if(-Not (Test-Path "$BoxStoreFile") -And $UseSharedBox)
 {
-  Write-Host "Notice: Existing '$FileName' VM image not found at '$RemoteBoxLoc'."
+  Write-Host "Notice: Existing '$FileName' VM image not found at '$BoxStore'."
   Write-Host "Notice: Preparing to create '$FileName'..."
 
   # Bootstrap Packer
   BootstrapPacker -VMDir "$VMDir" -PackerUrl "https://releases.hashicorp.com/packer/1.0.0/packer_1.0.0_windows_amd64.zip"
 
   # Build Packer box.
-  Remove -Path "$BoxFile"
+  Remove -File "$BoxFile"
 
   pushd "$VMDir"
     Write-Host "Notice: Creating '$FileName'..."
     ./packer.exe build -only virtualbox-iso "$BoxJson"
   popd
   
-  if (-Not (Test-Path $targetDir))
+  if (-Not (Test-Path $BoxStore))
   {
-    New-Item -ItemType directory -Path "$RemoteBoxLoc" -Force
+    New-Item -ItemType directory -Path "$BoxStore" -Force
   }
-  if (-Not (Test-Path $RemoteFileName))
+  if (-Not (Test-Path $BoxStoreFile))
   {
-    Write-Host "Notice: Copying '$FileName' to '$RemoteBoxLoc'..."
-    Copy-Item -Path "$BoxFile" -Destination "$RemoteBoxLoc" -Force
+    Write-Host "Notice: Copying '$FileName' to '$BoxStore'..."
+    robocopy "$VMDir" "$BoxStore" "$FileName" /njh /njs /ndl /nc /ns
+    #Copy-Item -Path "$BoxFile" -Destination "$BoxStore" -Force
   }
 }
 
-if([System.IO.File]::Exists($BoxFile))
+vagrant plugin repair
+vagrant destroy default
+vagrant box remove "$Name" --force
+#if([System.IO.File]::Exists($BoxFile))
+if(-Not (Test-Path "$BoxFile" -PathType Leaf))
 {
-  vagrant box remove "$Name"
-  vagrant box add "$Name" "$BoxFile"
+  robocopy "$BoxStore" "$VMDir" "$FileName" /njh /njs /ndl /nc /ns
 }
-Remove -Path "$BoxFile"
+vagrant box add "$Name" "$BoxFile"
+Remove -File "$BoxFile"
+
+
+#Spin up the virtual machine.
+vagrant up
+
+
+
+#$PackerZip = $VMDir + "\packer.zip"
+#$PackerExe = $VMDir + "\packer.exe"
+#if(![System.IO.File]::Exists($PackerExe) -And ![System.IO.File]::Exists($PackerZip))
+#{
+#  Download -url "https://releases.hashicorp.com/packer/1.0.0/packer_1.0.0_windows_amd64.zip" -saveto "$PackerZip"
+#}
+#if(![System.IO.File]::Exists($PackerExe))
+#{
+#  unzip "$PackerZip" "$VMDir"
+#}
+#RmIfExists -path "$PackerZip"
+
+# Build Packer box.
+#$BoxFile = $VMDir + "\" + $name + ".box"
+#$BoxFileFullPath = $VMDir + "\" + $BoxFile
+#$BoxJson = $VMDir + "\" + $name + ".json"
+#RmIfExists -path "$BoxFileFullPath"
+
+#  pushd "$VMDir"
+#    Write-Host "Notice: Creating '$FileName'..."
+#    ./packer.exe build -only virtualbox-iso "$BoxJson"
+#  popd
+#if([System.IO.File]::Exists($BoxFileFullPath))
+#{
+#  vagrant box remove "$name"
+#  vagrant box add "$name" "$BoxFile"
+#}
+#RmIfExists -path "$BoxFileFullPath"

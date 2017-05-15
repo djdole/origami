@@ -9,29 +9,30 @@ function unzip
 function Remove
 {
   [CmdletBinding()]
-  Param(
-    [parameter(mandatory=$true)]
-    [ValidateNotNullorEmpty()]
-    [string]$Path
-  )
-  if([System.IO.File]::Exists($Path))
-  {
-    #rm "$Path"
-    Remove-Item -Path "$Path" -Force
-  }
+    Param(
+      [parameter(mandatory=$true)]
+      [ValidateNotNullorEmpty()]
+      [string]$File
+    )
+  if([System.IO.File]::Exists($File))
+	{
+	#Write-Host "file=$File"
+    #Remove-Item -path "$File" -Force
+    rm "$File" -Recurse -Force 2>&1>$null
+	}
 }
 
 function Install-MSI
 {
   [CmdletBinding()]
-  Param(
-    [parameter(mandatory=$true,ValueFromPipeline=$true,ValueFromPipelinebyPropertyName=$true)]
-    [ValidateNotNullorEmpty()]
-    [string]$msi,
-    [parameter()]
-    [ValidateNotNullorEmpty()]
-    [string]$targetDir
-  )
+    Param(
+      [parameter(mandatory=$true,ValueFromPipeline=$true,ValueFromPipelinebyPropertyName=$true)]
+      [ValidateNotNullorEmpty()]
+      [string]$msi,
+      [parameter()]
+      [ValidateNotNullorEmpty()]
+      [string]$targetDir
+    )
   if (-Not (Test-Path $msi))
   {
     throw "Path to the MSI File $($msi) is invalid. Please supply a valid MSI file"
@@ -70,35 +71,59 @@ function Get-InstalledApps
 {
   if ([IntPtr]::Size -eq 4)
   {
-    $regpath = 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*'
-  }
+        $regpath = 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*'
+    }
   else
   {
-    $regpath = @(
-      'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*'
-      'HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'
-    )
-  }
-  Get-ItemProperty $regpath | .{process{if($_.DisplayName -and $_.UninstallString) { $_ } }} | Select DisplayName, Publisher, InstallDate, DisplayVersion, UninstallString |Sort DisplayName
+        $regpath = @(
+            'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*'
+            'HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'
+        )
+    }
+    Get-ItemProperty $regpath | .{process{if($_.DisplayName -and $_.UninstallString) { $_ } }} | Select DisplayName, Publisher, InstallDate, DisplayVersion, UninstallString |Sort DisplayName
 }
 
 function Download
 {
   [CmdletBinding()]
-  Param(
-    [parameter(mandatory=$true)]
-    [ValidateNotNullorEmpty()]
-    [string]$url,
-    [parameter(mandatory=$true)]
-    [ValidateNotNullorEmpty()]
-    [string]$saveto
-  )
+    Param(
+      [parameter(mandatory=$true)]
+      [ValidateNotNullorEmpty()]
+      [string]$url,
+      [parameter(mandatory=$true)]
+      [ValidateNotNullorEmpty()]
+      [string]$saveto
+    )
   $AllProtocols = [System.Net.SecurityProtocolType]'Ssl3,Tls,Tls11,Tls12'
   [System.Net.ServicePointManager]::SecurityProtocol = $AllProtocols
   wget -UseBasicParsing "$url" -OutFile "$saveto"
 }
 
 function GetAndInstall-MSI
+{
+  [CmdletBinding()]
+    Param(
+      [parameter(mandatory=$true)]
+      [ValidateNotNullorEmpty()]
+      [string]$name,
+      [parameter(mandatory=$true)]
+      [ValidateNotNullorEmpty()]
+      [string]$path,
+      [parameter(mandatory=$true)]
+      [ValidateNotNullorEmpty()]
+      [string]$url
+    )
+  $result = Get-InstalledApps | where {$_.DisplayName -like $name}
+  if ($result -eq $null)
+  {
+	Write-Host "Notice: Downloading msi from '$url'..."
+    Download -url "$url" -saveto "$path"
+    "$path" | Install-MSI
+    Remove -File "$path"
+  }
+}
+
+function GetAndInstall-EXE
 {
   [CmdletBinding()]
   Param(
@@ -117,7 +142,8 @@ function GetAndInstall-MSI
   {
 	Write-Host "Notice: Downloading msi from '$url'..."
     Download -url "$url" -saveto "$path"
-    "$path" | Install-MSI
+    & .\virtualbox.exe --silent
+    Remove -File "$path"
   }
 }
 
@@ -146,5 +172,5 @@ function BootstrapPacker
     }
     unzip "$PackerZip" "$VMDir"
   }
-  Remove -Path "$PackerZip"
+  Remove -File "$PackerZip"
 }

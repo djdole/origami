@@ -2,9 +2,7 @@
 
 set -e
 
-echo "Running 'setup.sh'..."
-
-# Installing vagrant keys
+echo "Installing vagrant keys..."
 mkdir ~/.ssh
 chmod 700 ~/.ssh
 cd ~/.ssh
