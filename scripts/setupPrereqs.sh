@@ -5,6 +5,8 @@ if [ "$(id -u)" != "0" ]; then
   exit 1
 fi
 
+whoami
+
 set -e
 
 if ! hash vboxmanage 2>/dev/null; then
@@ -23,7 +25,7 @@ if ! hash vboxmanage 2>/dev/null; then
       echo "Downloading virtualbox ${version}${subversion}..."
       wget ${url}
       echo "Installing..."
-      dpkg -i ${file}
+      dpkg --force-depends -i ${file}
       rm ${file}
     else
       echo "Not running an Ubuntu distribution. ID=${ID}, VERSION=${VERSION}"
@@ -34,7 +36,7 @@ if ! hash vboxmanage 2>/dev/null; then
 fi
 
 # Install puppet, chrome, virtualbox, & vagrant
-sudo apt-get install puppet-agent
+sudo apt-get -y install puppet-agent
 #puppet module install edestecd-software --version 1.1.0
 #puppet apply scripts/virtualbox.pp
 #puppet apply scripts/vagrant.pp
@@ -43,16 +45,17 @@ if ! hash vagrant 2>/dev/null; then
   if [[ -r /etc/os-release ]]; then
     . /etc/os-release
     if [[ ${ID} = ubuntu ]]; then
+#      version="1.8.4"
 #      version="1.9.4"
-      version="1.8.4"
+      version="1.9.5"
       host="https://releases.hashicorp.com/vagrant/${version}/"
       file="vagrant_${version}_x86_64.deb"
       url=${host}${file}
 #      url="https://releases.hashicorp.com/vagrant/1.9.4/vagrant_1.9.4_x86_64.deb?_ga=2.45359277.802931467.1494838094-1814000029.1489988185"
       echo "Downloading vagrant ${version}..."
       wget -O vagrant.deb ${url}
-      echo "Installing..."
-      dpkg -i vagrant.deb
+      echo "Installing... ( as $(whoami) )"
+      dpkg --force-depends -i vagrant.deb
       rm vagrant.deb
     else
       echo "Not running an Ubuntu distribution. ID=${ID}, VERSION=${VERSION}"

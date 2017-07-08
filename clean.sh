@@ -7,9 +7,10 @@ fi
 
 set -e
 
-rm -f packer
-rm -f packer*.zip
-rm -f vm/*.box
-rm -rf vm/packer_cache
-rm -rf .vagrant
-sudo vagrant box remove BLANK
+sudo rm -f packer > /dev/null 2>&1
+sudo rm -f packer*.zip > /dev/null 2>&1
+sudo vagrant destroy -f > /dev/null 2>&1
+sudo rm -f vm/*.box > /dev/null 2>&1
+sudo rm -rf vm/packer_cache > /dev/null 2>&1
+sudo rm -rf .vagrant > /dev/null 2>&1
+sudo vagrant box remove BASE -f > /dev/null 2>&1

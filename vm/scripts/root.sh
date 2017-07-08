@@ -19,14 +19,16 @@ cp /etc/sudoers /etc/sudoers.orig
 sed -i -e '/Defaults\s\+env_reset/a Defaults\texempt_group=admin' /etc/sudoers
 sed -i -e 's/%admin ALL=(ALL) ALL/%admin ALL=NOPASSWD:ALL/g' /etc/sudoers
 
-echo "Install Puppet..."
+echo "INSTALLING Puppet..."
+echo "================================================================="
 url="http://apt.puppetlabs.com/puppetlabs-release-pc1-yakkety.deb"
-echo "Downloading $file..."
+echo "Downloading $url..."
 sudo wget -O puppet.deb "$url"
 echo "Installing..."
-sudo dpkg -i puppet.deb
+sudo dpkg --force-depends -i puppet.deb
 sudo apt-get update
 sudo rm -f puppet.deb
+echo "================================================================="
 
 # Allow Apache in the firewall, if it isn't...
 #sudo ufw allow in "Apache Full"
